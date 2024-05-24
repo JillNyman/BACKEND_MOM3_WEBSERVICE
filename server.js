@@ -1,12 +1,10 @@
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
+const bodyParser = require('body-parser');
 
 const app = express();
 const port = process.env.PORT || 3000;
-
-app.use(cors());
-app.use(express.json());
 
 //Skapa förbindelse med mongoDB (compass)
 mongoose.connect("mongodb://127.0.0.1:27017/work").then(() => {
@@ -14,6 +12,10 @@ mongoose.connect("mongodb://127.0.0.1:27017/work").then(() => {
 }).catch((error) => {
     console.log("Error connecting to database: " + error);
 })
+
+app.use(cors());
+app.use(express.json());
+app.use(bodyParser.json());
 
 //Skapa schema (collection till databasen work)
 const CurriculumSchema = mongoose.Schema({
@@ -30,7 +32,7 @@ const Curriculum = mongoose.model("Curriculum", CurriculumSchema);
 
 //Routes
 //Databasen
-app.get("/work", async (req, res) => {//<---
+app.get("/work", async (req, res) => {
     res.json({message: "Welcome to this API"});
 });
 
@@ -65,76 +67,40 @@ app.post("/curriculums", async(req, res) => {
     }    
 });
 
-/*app.post('/delete-item',function(res,req){
-    db.collection('item').deleteOne({_id:new mongodb.ObjectId(req.body.id)},function(){
-      res.send("success")
-    })
-  })*/
-
-  //Radera post, DELETE
+//Radera post, DELETE
 app.delete("/curriculums/:id", async(req, res) => {
-    let id = req.params.id;
-    const job = await Curriculum.deleteOne({_id: id});
-    return res.json(job);
+
+    try{
+        let id = req.params._id;
+        let result = await Curriculum.findByIdAndDelete(id);
+        if(result){
+            res.status(200).send({message: "Posten raderad."});
+        } else {
+            res.status(404).send({message: "Posten hittades inte."});
+        }
+    } catch (error) {
+        res.status(500).send({message: "Ett fel uppstod.", error});
+    }  
+   
 });
 
 //Uppdatera post, PUT
 app.put("/curriculums/:id", async(req, res) => {
-    let curriculum2 = new Curriculum({
 
-  
-    _id: req.params.id,
+    try{
+        let id = req.params._id;
+        let updatedPost = req.body;
+        let result = await Curriculum.findByIdAndUpdate(id, updatedPost, {new: true});
+        if(result){
+            res.status(200).send({message: "Posten uppdaterad."});
+        } else {
+            res.status(404).send({message: "Posten hittades inte."});
+        }
+    } catch (error) {
+        res.status(500).send({message: "Ett fel uppstod vid uppdatering.", error});
+    }   
 
-    companyname: req.body.companyname,
-    jobtitle: req.body.jobtitle,
-    startdate: req.body.startdate,
-    enddate: req.body.enddate,
-    description: req.body.description
-})
-
-    let updatedPost = await Curriculum.save(curriculum2);
-    return res.json(updatedPost);
-
-})
-
-/*Curriculum.findByIdAndDelete(id.req.body, function (err, docs) {
-    if(!err){
-        console.log(docs);
-    } else{
-        console.log(err);
-    }
-});*/
-
-//Skapa ny post i collection
-/*async function createJob() {
-    //objekt som representerar arbete
-    let curriculum1 = {
-        companyname: req.body.companyname, 
-        jobtitle: req.body.jobtitle,
-        startdate: req.body.startdate,
-        enddate: req.body.enddate,
-        description: req.body.description
-    };
-try{
-    await Curriculum.create(curriculum1);
-} catch(error){
-    return "There was an error: " + error;
-}
-}*/
-
-async function getJobs(){
-    try {
-        let result = await Curriculum.find();
-        console.log(result);
-    } catch(error){
-        return "There was an error: " + error;
-    }
-}
-
-//createJob();
-getJobs();
-
-
+});
 
 app.listen(port, () => {
     console.log("Server is running on port: " + port);
