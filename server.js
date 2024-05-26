@@ -47,7 +47,7 @@ app.get("/curriculums", async(req, res) => {
     }
 })
 
-//POST till collection
+//POST till kollection
 app.post("/curriculums", async(req, res) => {
     let curriculum1 = new Curriculum ( {
         companyname: req.body.companyname, 
@@ -57,8 +57,8 @@ app.post("/curriculums", async(req, res) => {
         description: req.body.description
     });
     try{
-        //curriculum1.save();
-        let result = await Curriculum.create(curriculum1);//(req.body);
+       
+        let result = await Curriculum.create(curriculum1);
 
         return res.json(result);
     }
@@ -68,17 +68,25 @@ app.post("/curriculums", async(req, res) => {
 });
 
 //Radera post, DELETE
-app.delete("/curriculums/:id", async(req, res) => {
+app.delete('/curriculums/:id', async (req, res) => {
 
     try{
-        let id = req.params._id;
-        let result = await Curriculum.findByIdAndDelete(id);
+        let id = req.params.id;
+        console.log("ID: ", id);
+        if(!mongoose.Types.ObjectId.isValid(id)){
+            return res.status(400).send({message: "Invalid ID format"});
+        }
+        //let result = await Curriculum.findBy(id);
+        let result = await Curriculum.deleteOne({_id: id});
         if(result){
+            console.log("Resultat: ", result);
             res.status(200).send({message: "Posten raderad."});
         } else {
+            console.log("Resultat: ", result);
             res.status(404).send({message: "Posten hittades inte."});
         }
     } catch (error) {
+        console.log("Resultat: ", result);
         res.status(500).send({message: "Ett fel uppstod.", error});
     }  
    
