@@ -7,11 +7,12 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 //Skapa förbindelse med mongoDB (compass)
-mongoose.connect("mongodb://127.0.0.1:27017/work").then(() => {
+mongoose.connect("mongodb://localhost:27017/work").then(() => {
     console.log("Connected to MongoDB");
 }).catch((error) => {
     console.log("Error connecting to database: " + error);
 })
+
 
 app.use(cors());
 app.use(express.json());
@@ -49,21 +50,37 @@ app.get("/curriculums", async(req, res) => {
 
 //POST till kollection
 app.post("/curriculums", async(req, res) => {
-    let curriculum1 = new Curriculum ( {
+    /*let curriculum1 = new Curriculum ( {
         companyname: req.body.companyname, 
         jobtitle: req.body.jobtitle,
         startdate: req.body.startdate,
         enddate: req.body.enddate,
-        description: req.body.description
-    });
+        description: req.body.description*/
+        const { companyname, jobtitle, startdate, enddate, description } = req.body;
+
+        if(!companyname || !jobtitle) {
+            return res.status(400).json({ error: "Fälten FÖRETAG och TITEL är obligatoriska."});
+        }
+
+        let curriculum1 = new Curriculum({
+            companyname: companyname.trim(),
+            jobtitle: jobtitle.trim(),
+            startdate: startdate ? startdate.trim() : null,
+            enddate: enddate ? enddate.trim() : null,
+            description: description ? description.trim() : null
+        });
+    
     try{
        
         let result = await Curriculum.create(curriculum1);
-
-        return res.json(result);
+        if(result){
+            console.log("Resultat:", result);
+            res.status(200).send({message: "Posten tillagd!"});
+            return;
+    }
     }
     catch(error){
-        return res.status(400).json(error);
+        return res.status(500).send({message: "Ett fel uppstod när posten skulle läggas till: ", error})
     }    
 });
 
